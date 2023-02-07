@@ -1,0 +1,155 @@
+import pygame, sys
+import time
+import random
+class Char1(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y, picture_path):
+        super().__init__()
+        self.image = pygame.image.load(picture_path)
+        self.rect = self.image.get_rect()
+        self.rect.center = [pos_x,pos_y]
+
+    def shrink(self, percent):
+        self.rect = self.rect.inflate(-self.rect.width*percent, -self.rect.height*percent)
+        self.image = pygame.transform.scale(self.image, (self.rect.width, self.rect.height))
+
+
+def spawn_despawn_sprites(interval, despawn_interval, sprite_list, sprite_image, screen_size):
+    current_time = pygame.time.get_ticks()
+
+    # Check if the spawn interval has passed
+    if current_time - spawn_despawn_sprites.last_spawn_time > interval:
+        spawn_despawn_sprites.last_spawn_time = current_time
+
+        # Choose a random edge of the screen to spawn the sprite
+        edge = random.choice(["top", "bottom", "left", "right"])
+
+        # Create the sprite
+        sprite = pygame.sprite.Sprite()
+        sprite.image = sprite_image
+        sprite.rect = sprite.image.get_rect()
+        sprite.spawn_time = current_time
+
+        # Position the sprite at the chosen edge of the screen
+        if edge == "top":
+            sprite.rect.x = random.randint(0, screen_size[0] - sprite.rect.width)
+            sprite.rect.y = 0
+        elif edge == "bottom":
+            sprite.rect.x = random.randint(0, screen_size[0] - sprite.rect.width)
+            sprite.rect.y = screen_size[1] - sprite.rect.height
+        elif edge == "left":
+            sprite.rect.x = 0
+            sprite.rect.y = random.randint(0, screen_size[1] - sprite.rect.height)
+        elif edge == "right":
+            sprite.rect.x = screen_size[0] - sprite.rect.width
+            sprite.rect.y = random.randint(0, screen_size[1] - sprite.rect.height)
+
+        # Add the sprite to the sprite list
+        sprite_list.append(sprite)
+
+    # Despawn any sprites that have been on screen for too long
+    for sprite in sprite_list:
+        if current_time - sprite.spawn_time > despawn_interval:
+            sprite_list.remove(sprite)
+# global variables
+I = 0
+Level = 1
+characters = ["rin", "blank", "blank2"]
+sprites = []  # For weapon gate
+sprite_image = pygame.image.load("coin.png")
+spawn_despawn_sprites.last_spawn_time = 0
+despawn_interval = 15000
+screen_size = (1280, 720)
+Button_disabler = 0
+timer_enabler = 0
+interval = 3000
+
+# initialize pygame and clock
+pygame.init()
+clock = pygame.time.Clock()
+screen = pygame.display.set_mode([1280, 720])  # screen size in pixels
+running = True  # keeps game running until...
+
+# preset colors
+RED = (171, 88, 136)
+
+# Image and Sprite Generated here
+image = pygame.image.load("rin.png")
+char1 = Char1(640,400,"rin.png")
+image2 = pygame.image.load("2.png")
+num2 = Char1(645,650,"2.png")
+# Select font
+myfont = pygame.font.Font(None, 60)
+text_surface = myfont.render("-Character Select-", True, (0, 255, 255))
+
+# add object to group
+char1_group = pygame.sprite.Group() # Rin Sprite
+char1_group.add(char1)
+num2_group = pygame.sprite.Group() # 2 Sprite
+num2_group.add(num2)
+# Shrink it
+char1.shrink(0.9)
+num2.shrink(0.7)
+while running:
+
+    # Did the user click the window close button?
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    # background
+    screen.fill((0, 0, 0))
+    # character select portraits
+    if I==0:
+            pygame.draw.ellipse(screen, RED, (100, 200, 300, 400)) # character select portraits
+            pygame.draw.ellipse(screen, RED, (490, 200, 300, 400))
+            pygame.draw.ellipse(screen, RED, (880, 200, 300, 400))
+            # select your character location
+            screen.blit(text_surface, (440, 100))
+    # draw sprites character select
+    char1_group.draw(screen)  # rin
+    if I ==0:
+        num2_group.draw(screen)  # 2 icon
+    else:
+        Char1.remove(num2)
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_2] and Button_disabler == 0:
+        I = 1
+        Button_disabler = 1
+        timer_ref =pygame.time.get_ticks()
+        image = pygame.image.load("rin.png")
+        char1 = Char1(640, 400, "rin.png")
+        char1_group = pygame.sprite.Group()  # Rin Sprite
+        char1_group.add(char1)
+        char1.shrink(.95)
+    if I !=0:
+        if keys[pygame.K_w]:
+            char1.rect.top -= 5
+        if keys[pygame.K_s]:
+            char1.rect.top += 5
+        if keys[pygame.K_a]:
+            char1.rect.left -= 5
+        if keys[pygame.K_d]:
+            char1.rect.left += 5
+        elapsed_time = pygame.time.get_ticks() - timer_ref
+        minutes, seconds = divmod(elapsed_time / 1000, 60)
+        # Check if seconds are greater or equal than 1
+        if seconds >= 1:
+            elapsed_time_text = myfont.render("{:.0f}:{:.0f}".format(minutes, seconds), True, (255, 255, 255))
+            screen.blit(elapsed_time_text, (10, 10))
+
+
+        #Spawner of gates
+        spawn_despawn_sprites(interval,despawn_interval,sprites, sprite_image,screen_size)
+        for sprite in sprites:
+            screen.blit(sprite.image, sprite.rect)
+    if char1.rect.left < (-40):
+        char1.rect.left = -40
+    elif char1.rect.right > screen.get_width() + 40:
+        char1.rect.right = screen.get_width() + 40
+    if char1.rect.top < (-40):
+        char1.rect.top = -40
+    elif char1.rect.bottom > screen.get_height() + 40:
+        char1.rect.bottom = screen.get_height() + 40
+    pygame.display.update()
+    pygame.display.flip()
+    clock.tick(60)
+
