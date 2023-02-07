@@ -2,7 +2,7 @@
 A small game created using Pygame in Python
 Current Version: Beta Version 0.1
 
-CHANGELOG:
+CHANGELOG (2/6/2023):
 - Working timer
 - Working character select screen
 - Working character controls
